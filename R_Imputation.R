@@ -20,6 +20,8 @@ if (!require(splines)) install.packages('splines')
 library(splines)
 if (!require(openxlsx)) install.packages('openxlsx')
 library(openxlsx)
+if (!require(lubridate)) install.packages('lubridate')
+library(lubridate)
 
 # simulate data
 # id, time, covar1...y, item 1...z, score
@@ -1580,6 +1582,8 @@ run_simulation <- function(
   max_time <- max(unlist(visit_regime))
   true_effect <- theoretical_effect(max_time, prob_group, group_change_from_BL, group_50percent, visit_regime, prob_regime)
   
+  print(paste0("The true effect is: ", true_effect))
+  
   # aggregate results per method
   summary_by_method <- as.data.frame(res) %>%
     group_by(method) %>%
@@ -1671,35 +1675,35 @@ run_simulation <- function(
 #gc()
 
 
-n_sim_temp <- 10
-datum <- "June22nd_pmm"
+n_sim_temp <- 50000
+datum <- lubridate::today()
 
 
 method_temps <- c("nn", "nn_timeframe", "mean_timeframe", "spline")
 
 # reference case
 ## 10% missing
-res_sim_referencecase10 <-  run_simulation(n_sim = n_sim_temp)
+res_sim_reference_case10 <-  run_simulation(n_sim = n_sim_temp)
 ## H0
-res_sim_referencecase10_H0 <- run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+res_sim_reference_case10_H0 <- run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 ## 25% missing
-res_sim_referencecase25 <-  run_simulation(n_sim = n_sim_temp, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02))
+res_sim_reference_case25 <-  run_simulation(n_sim = n_sim_temp, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02))
 ## H0
-res_sim_referencecase25_H0 <- run_simulation(n_sim = n_sim_temp, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
-                                             group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+res_sim_reference_case25_H0 <- run_simulation(n_sim = n_sim_temp, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
+                                              group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 
 
 
 # effektgroesse 6
 ## 10% missing
-res_sim_effekt6_10 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = 1022)
+res_sim_effekt6_10 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = 1187)
 ## H0
-res_sim_effekt6_10_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = 1022, group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+res_sim_effekt6_10_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = 1187, group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 ## 25% missing
-res_sim_effekt6_25 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = 1022, 
+res_sim_effekt6_25 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = 1187, 
                                       missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02))
 ## H0
-res_sim_effekt6_25_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = 1022, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
+res_sim_effekt6_25_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = 1187, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
                                         group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 
 
@@ -1748,14 +1752,14 @@ res_sim_single_regime_25_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime =
 
 # grid size different weeks in between
 ## 10% missing
-res_sim_different_spacing_10 <-  run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 9*2*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7))
+res_sim_different_spacing_10 <-  run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7))
 ## H0
 res_sim_different_spacing_10_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 ## 25% missing
-res_sim_different_spacing_25 <-  run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 9*2*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), 
+res_sim_different_spacing_25 <-  run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), 
                                                 missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02))
 ## H0
-res_sim_different_spacing_25_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 9*2*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
+res_sim_different_spacing_25_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
                                                   group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 
 
@@ -1801,13 +1805,13 @@ write_runs <- function(df_list, file) {
 }
 
 outfile <- file.path(#"Z:/EU_Projekt_DEFINITIVE/R_Imputation",
-                     paste0("sim_results_", datum, "_n", n_sim_temp, ".xlsx"))
+  paste0("sim_results_", datum, "_n", n_sim_temp, ".xlsx"))
 #write_runs(list(BL = res_sim_data, simp3 = res_sim_data_simp3, df5 = res_sim_data_df5, sim3_df5 = res_sim_data_simp3_df5), file = outfile)
-write_runs(list(referencecase_10percent = res_sim_referencecase10, referencecase_10percent_H0 = res_sim_referencecase10_H0,
-                referencecase_25percent = res_sim_referencecase25, referencecase_25percent_H0 = res_sim_referencecase25_H0,
+write_runs(list(reference_case_10percent = res_sim_reference_case10, reference_case_10percent_H0 = res_sim_reference_case10_H0,
+                reference_case_25percent = res_sim_reference_case25, reference_case_25percent_H0 = res_sim_reference_case25_H0,
                 
-                effectsize6_10percent = res_sim_effekt6_10, effectsize6_10percent_H0 = res_sim_effekt6_10_H0,
-                effectsize6_25percent = res_sim_effekt6_25, effectsizee6_25percent_H0 = res_sim_effekt6_25_H0,
+                effectsize_6_10percent = res_sim_effekt6_10, effectsize_6_10percent_H0 = res_sim_effekt6_10_H0,
+                effectsize_6_25percent = res_sim_effekt6_25, effectsize_6_25percent_H0 = res_sim_effekt6_25_H0,
                 
                 covcorr_05_10percent = res_sim_higher_covcorr_10, covcorr_05_10percent_H0 = res_sim_higher_covcorr_10_H0, 
                 covcorr_05_25percent = res_sim_higher_covcorr_25, covcorr_05_25percent_H0 = res_sim_higher_covcorr_25_H0,
@@ -1817,7 +1821,7 @@ write_runs(list(referencecase_10percent = res_sim_referencecase10, referencecase
                 
                 single_regime_10percent = res_sim_single_regime_10, single_regime_10percent_H0 = res_sim_single_regime_10_H0, 
                 single_regime_25percent = res_sim_single_regime_25, single_regime_25percent_H0 = res_sim_single_regime_25_H0,
-
+                
                 different_spacing_10percent = res_sim_different_spacing_10, different_spacing_10percent_H0 = res_sim_different_spacing_10_H0,
                 different_spacing_25percent = res_sim_different_spacing_25, different_spacing_25percent_H0 = res_sim_different_spacing_25_H0), 
            
