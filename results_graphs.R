@@ -23,6 +23,10 @@ read_scenario_workbook <- function(path) {
   raw$scenario[is_scenario_row] <- as.character(raw[[1]][is_scenario_row])
   raw$scenario <- tidyr::fill(raw, scenario, .direction = "down")$scenario
   
+  # get col indexes of missingness percentages
+  miss_idx <- which(grepl("missing|dropouts", raw[raw[ ,1] == "method", ]) & !(grepl("percent", raw[raw[ ,1] == "method", ])))
+  miss_nams <- unique(raw[raw[1,1] == "method", ])[miss_idx]
+  
   # data rows: exclude title rows and header rows
   dat <- raw[!is_scenario_row & as.character(raw[[1]]) != "method", ]
   
@@ -45,7 +49,7 @@ read_scenario_workbook <- function(path) {
 }
 
 
-file_path <- "Z:/EU_Projekt_DEFINITIVE/R_Imputation/sim_results_June22nd_pmm_n5000.xlsx"
+file_path <- "Z:/EU_Projekt_DEFINITIVE/R_Imputation/sim_results_June25nd_pmm_n50000.xlsx"
 df <- read_scenario_workbook(file_path)
 
 # order scenarios in the order they appear in the file
@@ -83,7 +87,7 @@ method_cols <- c(
 )
 
 
-combined_plot <- function(data, powerline, powerlims){
+combined_plot <- function(data, powerline, powerlims, powernam, power_se = sqrt((0.5*0.5)/n_sim_runs)){
   # order scenarios exactly as they appear
   scenario_order <- levels(data$scenario)
   
@@ -125,7 +129,7 @@ combined_plot <- function(data, powerline, powerlims){
   
   power_low_up <- c(min(powerlims), c(max(powerlims)))
   
-  pointsize <- 1.7
+  pointsize <- 1.3
 
   # power plot
   
@@ -141,14 +145,19 @@ combined_plot <- function(data, powerline, powerlims){
     
     scale_colour_manual(values = method_cols) +
     
-    labs(y = "Power", x = NULL, colour = "Method") +
+    labs(y = powernam, x = NULL, colour = "Method") +
     
     theme_bw() +
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "top", legend.title = element_blank(),
           legend.text = element_text(size = 10),
           legend.key.size = unit(0.8, "cm"),
           legend.spacing.x = unit(0.6, "cm"),
-          panel.grid.major.x = element_line(colour = "grey80", linewidth = 0.6)) +
+          panel.grid.major.x = element_line(colour = "grey80", linewidth = 0.6),
+          panel.border = element_rect(
+            colour = "black",
+            fill = NA,
+            linewidth = 1.2
+          )) +
     guides(
       colour = guide_legend(nrow = 2, byrow = T, override.aes = list(size = 2.5))
     )+
@@ -163,10 +172,19 @@ combined_plot <- function(data, powerline, powerlims){
     
   #p_power
   
+  if (!is.na(power_se)){
+    p_power <- p_power + 
+      geom_hline(
+        yintercept = c(powerline - power_se, powerline + power_se),
+        linetype = "dashed",
+        linewidth = 0.2
+      )
+  }
+  
   
   # bias plot
   
-  step <- 0.1
+  step <- 0.2
   
   biaslims <- seq(floor(min(data$bias)/step)*step, ceiling(max(data$bias)/step)*step , step)
   
@@ -191,7 +209,12 @@ combined_plot <- function(data, powerline, powerlims){
     theme(legend.position = "none", 
       axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.title = element_blank(),
       panel.grid.major.x = element_blank(),
-      panel.grid.minor.x = element_line(colour = "grey80", linewidth = 0.6)
+      panel.grid.minor.x = element_line(colour = "grey80", linewidth = 0.6),
+      panel.border = element_rect(
+        colour = "black",
+        fill = NA,
+        linewidth = 1.2
+      )
     ) +
     
     scale_y_continuous(breaks = biaslims, minor_breaks = F) +
@@ -222,9 +245,16 @@ combined_plot <- function(data, powerline, powerlims){
   
     #p_bias
   
+  coverage_se <- sqrt((0.95*0.05)/n_sim_runs)
+  
   p_coverage <- ggplot(data, aes(x = x, y = ci_coverage, colour = method, group = method)) +
     
     geom_hline(yintercept = 0.95) +
+    geom_hline(
+      yintercept = c(0.95 - coverage_se, 0.95 + coverage_se),
+      linetype = "dashed",
+      linewidth = 0.2
+    ) +
     
     geom_rect(data = block_info %>% filter(shade),
               aes(xmin = center-1, xmax = center+1, ymin = -Inf, ymax = Inf),
@@ -239,12 +269,7 @@ combined_plot <- function(data, powerline, powerlims){
     theme_bw() +
     theme(legend.position = "none", 
           panel.grid.major.x = element_blank(),
-          panel.grid.minor.x = element_line(colour = "grey80", linewidth = 0.6),
-          panel.border = element_rect(
-            colour = "black",
-            fill = NA,
-            linewidth = 0.5
-          )
+          panel.grid.minor.x = element_line(colour = "grey80", linewidth = 0.6)
     ) +
     
     scale_y_continuous(breaks = seq(0.9,1,0.025), minor_breaks = F) +
@@ -285,7 +310,12 @@ combined_plot <- function(data, powerline, powerlims){
 
     
     theme(
-      plot.margin = margin(5.5, 5.5, 35, 5.5)
+      plot.margin = margin(5.5, 5.5, 35, 5.5),
+      panel.border = element_rect(
+        colour = "black",
+        fill = NA,
+        linewidth = 0.01
+      )
     )
   
 
@@ -302,21 +332,77 @@ combined_plot <- function(data, powerline, powerlims){
 # method order
 method_order <- c("raw data", "nn", "nn timeframe", "mean timeframe", "spline", "spline2", "spline3", "complete case")
 
+n_sim_runs <- 50000
 
 ## H1 graphs
 
 df_H1 <- df[!(grepl("_H0", df$scenario)),]
 df_H1$method <- factor(df_H1$method, levels = method_order)
-plot_H1 <- combined_plot(df_H1, powerlims = seq(0.6, 1, 0.05), powerline = 0.8)
-ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H1_July2nd_pmm_n5000_wCI.pdf", plot_H1, height = 7, width = 8)
+plot_H1 <- combined_plot(df_H1, powerlims = seq(0.6, 1, 0.05), powerline = 0.8, powernam = "Power", power_se = NA)
+ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H1_July6th_pmm_n50000_wCI.pdf", plot_H1, height = 6.5, width = 7)
 
 
 ## H0 graphs
-
+# Rejection rate statt Power
 df_H0 <- df[(grepl("_H0", df$scenario)),]
 df_H0$method <- factor(df_H0$method, levels = method_order)
-plot_H0 <- combined_plot(df_H0, powerlims = seq(0.01, 0.04, 0.005), powerline = 0.025)
-ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H0_July2nd_pmm_n5000_wCI.pdf", plot_H0, height = 7, width = 8)
+plot_H0 <- combined_plot(df_H0, powerlims = seq(0.01, 0.04, 0.005), powerline = 0.025, powernam = "Rejection rate", power_se = sqrt((0.025*(1-0.025))/n_sim_runs))
+ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H0_July6th_pmm_n50000_wCI.pdf", plot_H0, height = 6.5, width = 7)
+
+
+
+
+
+
+
+
+
+## plot demonstrating the different visit regimes
+regime1 <- data.frame(time = seq(0, 5*3*7, 3*7), y = 2, label = "Regime 1")
+regime2 <- data.frame(time = seq(0, 9*2*7, 2*7), y = 1, label = "Regime 2")
+
+regime_df <- rbind(regime1, regime2)
+regime_df$shape <- "Neoadjuvant visit"
+regime_df$shape[regime_df$time %in% c(105,126)] <- "Pre-surgery visit"
+regime_df$shape[regime_df$time %in% c(0)] <- "BL visit"
+
+p <- ggplot(data = regime_df, aes(x = time, y = y, color = label, group = label, shape = shape)) +
+  geom_vline(xintercept = seq(3*7, 12*7, 3*7), colour = "grey85", linewidth = 2) +# this is the grid
+  
+  geom_point(aes(size = shape)) +
+  geom_line() +
+  
+  theme_bw() +
+  theme(legend.position = "top") +
+  scale_color_manual(values = c("lightpink2", "darkolivegreen3")) +
+  scale_shape_manual(breaks = c("BL visit", "Neoadjuvant visit", "Pre-surgery visit"), values = c(15, 16, 18)) +
+  scale_size_manual(breaks = c("BL visit", "Neoadjuvant visit", "Pre-surgery visit"), values = c(5, 3, 7)) +
+  scale_y_continuous(breaks = c(1,2), labels = c("Regime 2", "Regime 1"), minor_breaks = F, limits = c(0.8, 2.2)) +
+  scale_x_continuous(breaks = seq(0,20*7, 7), labels = seq(0,20), minor_breaks = F) + 
+  labs(color = "", shape = "", y = "", x = "weeks") +
+  guides(
+    color = "none",
+    size = "none",
+    shape = guide_legend(
+      override.aes = list(size = c(5,3,7)  # make legend symbols bigger
+    )))
+p
+
+ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/schematic_visit_regimes.pdf", p, height = 2.5, width = 6.5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

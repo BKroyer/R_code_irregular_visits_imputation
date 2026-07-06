@@ -569,7 +569,7 @@ sim_long_data <- function(
     b<-sigma_y*korr_y_x
     sigma<-sqrt(sigma_y^2 - b^2*n_x)
     
-    korr_y_y2_soll <- 0.9 ^ (1:n_tp_temp-1) # changes according to AR(1) with score-score corr over time
+    korr_y_y2_soll <- time_corr ^ (1:n_tp_temp-1) # changes according to AR(1) with score-score corr over time
     
     cov_y_y2_soll=korr_y_y2_soll*sigma_y^2
     cov_y_y2_rest<-cov_y_y2_soll-b^2*n_x
