@@ -1695,15 +1695,16 @@ res_sim_reference_case25_H0 <- run_simulation(n_sim = n_sim_temp, missing_at_BL_
 
 
 # effektgroesse 6
+n_pat_new <- ceiling(304 * (8.07654320987654/3.74320987654321)^2) # this is with the different spacing, returns 1416 patients.
 ## 10% missing
-res_sim_effekt6_10 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = 1187)
+res_sim_effekt6_10 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = n_pat_new)
 ## H0
-res_sim_effekt6_10_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = 1187, group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+res_sim_effekt6_10_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = n_pat_new, group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 ## 25% missing
-res_sim_effekt6_25 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = 1187, 
+res_sim_effekt6_25 <-  run_simulation(n_sim = n_sim_temp, group_change_from_BL = c(10, 16), n_patients = n_pat_new, 
                                       missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02))
 ## H0
-res_sim_effekt6_25_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = 1187, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
+res_sim_effekt6_25_H0 <- run_simulation(n_sim = n_sim_temp, n_patients = n_pat_new, missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
                                         group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 
 
@@ -1749,19 +1750,18 @@ res_sim_single_regime_25_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime =
                                               group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 
 
-
+#arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7))
 # grid size different weeks in between
 ## 10% missing
-res_sim_different_spacing_10 <-  run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7))
+res_sim_different_spacing_10 <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7)))
 ## H0
-res_sim_different_spacing_10_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+res_sim_different_spacing_10_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7)), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
 ## 25% missing
-res_sim_different_spacing_25 <-  run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), 
+res_sim_different_spacing_25 <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7)), 
                                                 missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02))
 ## H0
-res_sim_different_spacing_25_H0 <- run_simulation(n_sim = n_sim_temp, visit_regime = list(seq(0, 6*3*7, 2*7), seq(0, 9*3*7, 3*7)), arti_tp = seq(0, 6*3*7, 3*7), missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
+res_sim_different_spacing_25_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7)), missing_at_BL_percent = c(0.01, 0.02), missing_per_visit_percent = c(0.05, 0.05), dropout_per_visit_percent = c(0.03, 0.02),
                                                   group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
-
 
 
 
