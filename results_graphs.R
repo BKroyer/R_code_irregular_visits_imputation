@@ -385,7 +385,7 @@ p <- ggplot(data = regime_df, aes(x = time, y = y, color = label, group = label,
     size = "none",
     shape = guide_legend(
       override.aes = list(size = c(5,3,7)  # make legend symbols bigger
-    )))
+      )))
 p
 
 ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/schematic_visit_regimes.pdf", p, height = 2.5, width = 6.5)
