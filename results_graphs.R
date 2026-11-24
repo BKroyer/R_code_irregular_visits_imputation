@@ -31,8 +31,114 @@ read_scenario_workbook <- function(path) {
   dat <- raw[!is_scenario_row & as.character(raw[[1]]) != "method", ]
   
   # rename columns
-  names(dat)[1:6] <- c("method", "n_sim", "bias", "se_est", "power", "ci_coverage")
+  col_nams <- c("method", "n_sim", "bias", "se_est", "power", "ci_coverage", "degrees_freedom_spline", 
+                "n_spline_points", "n_patients",	"n_groups",	"missing_at_presurgery",	"missing_all_tps",	
+                "dropouts",	"patients_affected_by_missingness")
+  names(dat)[1:length(col_nams)] <- col_nams
   
+  
+  ## extract the columns with missings info and create latex table
+  
+  create_latex <- function(dat, H0_or_H1){
+    
+    dat$scenario <- sapply(dat$scenario, function(x) {
+      if (grepl("_H0$", x)) x else paste0(x, "_H1")
+    })
+    
+    scenario_labels <- c(
+      "reference_case_10percent" = "Reference case 10\\%",
+      "reference_case_25percent" = "Reference case 25\\%",
+      "effectsize_6_10percent"   = "Effectsize 6 10\\%",
+      "effectsize_6_25percent"   = "Effectsize 6 25\\%",
+      "covcorr_05_10percent"     = "Covcorr 05 10\\%",
+      "covcorr_05_25percent"     = "Covcorr 05 25\\%",
+      "timecorr_07_10percent"    = "Timecorr 07 10\\%",
+      "timecorr_07_25percent"    = "Timecorr 07 25\\%",
+      "single_regime_10percent"  = "Single regime 10\\%",
+      "single_regime_25percent"  = "Single regime 25\\%",
+      "same_spacing_10percent"   = "Same spacing 10\\%",
+      "same_spacing_25percent"   = "Same spacing 25\\%"
+    )
+    
+    metrics <- c(
+      "missing_at_presurgery",
+      "missing_all_tps",
+      "dropouts",
+      "patients_affected_by_missingness"
+    )
+    
+    first_reported <- function(x) {
+      x <- as.character(x)
+      x <- x[!is.na(x) & x != "-"]
+      if (length(x) == 0) "" else x[1]
+    }
+    
+    tab <- dat %>%
+      mutate(
+        scenario = as.character(scenario),
+        base_scenario = str_remove(scenario, "_H[01]$")
+      ) %>%
+      filter(str_ends(scenario, paste0("_", H0_or_H1))) %>%
+      group_by(base_scenario) %>%
+      summarise(
+        across(all_of(metrics), first_reported),
+        .groups = "drop"
+      ) %>%
+      mutate(label = unname(scenario_labels[base_scenario])) %>%
+      filter(!is.na(label)) %>%
+      arrange(match(base_scenario, names(scenario_labels)))
+    
+    
+    separator_after <- c(
+      "reference_case_25percent",
+      "effectsize_6_25percent",
+      "covcorr_05_25percent",
+      "timecorr_07_25percent",
+      "single_regime_25percent"
+    )
+    
+    rows <- character()
+    
+    for (i in seq_len(nrow(tab))) {
+      rows <- c(rows, paste0(
+        tab$label[i], " & ",
+        tab$missing_at_presurgery[i], " & ",
+        tab$missing_all_tps[i], " & ",
+        tab$dropouts[i], " & ",
+        tab$patients_affected_by_missingness[i],
+        " \\\\"
+      ))
+      
+      if (tab$base_scenario[i] %in% separator_after) {
+        rows <- c(rows, "\\\\")
+      }
+    }
+    
+    latex <- paste0(
+      "\\begin{table}[h!]\n",
+      "\\caption{Missingness metrics for scenarios under ", H0_or_H1,", given per group (A or B)}\\label{missings",H0_or_H1,"}%\n",
+      "\\begin{tabular}{@{}p{2.5cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}@{}}\n",
+      "\\toprule\n",
+      " & missing at the pre-surgery visit\\newline [\\% of patients] & ",
+      "missings of all time points [\\%] & ",
+      "dropouts\\newline [\\% of patients] & ",
+      "patients affected by missingness\\newline [\\% of patients] \\\\\n",
+      "\\midrule\n",
+      paste(rows, collapse = "\n"), "\n",
+      "\\botrule\n",
+      "\\end{tabular}\n",
+      "\\end{table}\n"
+    )
+    
+    cat(latex)
+  }
+
+  create_latex(dat, "H0")
+  create_latex(dat, "H1")
+  
+  
+  
+  ## extract columns needed for the graphs
   dat <- dat %>%
     dplyr::select(scenario, method, n_sim, bias, se_est, power, ci_coverage) %>%
     mutate(
@@ -49,7 +155,7 @@ read_scenario_workbook <- function(path) {
 }
 
 
-file_path <- "Z:/EU_Projekt_DEFINITIVE/R_Imputation/sim_results_June25nd_pmm_n50000.xlsx"
+file_path <- "Z:/EU_Projekt_DEFINITIVE/R_Imputation/sim_results_2026-07-23_n50000.xlsx"
 df <- read_scenario_workbook(file_path)
 
 # order scenarios in the order they appear in the file
@@ -338,8 +444,8 @@ n_sim_runs <- 50000
 
 df_H1 <- df[!(grepl("_H0", df$scenario)),]
 df_H1$method <- factor(df_H1$method, levels = method_order)
-plot_H1 <- combined_plot(df_H1, powerlims = seq(0.6, 1, 0.05), powerline = 0.8, powernam = "Power", power_se = NA)
-ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H1_July6th_pmm_n50000_wCI.pdf", plot_H1, height = 6.5, width = 7)
+plot_H1 <- combined_plot(df_H1, powerlims = seq(0.1, 1, 0.1), powerline = 0.8, powernam = "Power", power_se = NA)
+ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H1_Oct14th_pmm_n50000_wCI.pdf", plot_H1, height = 6.5, width = 7)
 
 
 ## H0 graphs
@@ -347,7 +453,7 @@ ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H1_July6th_pmm_n50000_wCI.pdf", pl
 df_H0 <- df[(grepl("_H0", df$scenario)),]
 df_H0$method <- factor(df_H0$method, levels = method_order)
 plot_H0 <- combined_plot(df_H0, powerlims = seq(0.01, 0.04, 0.005), powerline = 0.025, powernam = "Rejection rate", power_se = sqrt((0.025*(1-0.025))/n_sim_runs))
-ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H0_July6th_pmm_n50000_wCI.pdf", plot_H0, height = 6.5, width = 7)
+ggsave("Z:/EU_Projekt_DEFINITIVE/R_Imputation/H0_Oct14th_pmm_n50000_wCI.pdf", plot_H0, height = 6.5, width = 7)
 
 
 

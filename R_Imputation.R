@@ -1819,6 +1819,31 @@ write_runs(list(different_spacing_10percent = res_sim_different_spacing_10, diff
 
 
 
+# try some more same spacing but less time between pre-surgery visits #5000 runs
+## original one
+res_sim_same_orig_10 <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7)))
+res_sim_same_orig_10_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*3*7, 3*7)), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+## both 5 
+res_sim_same_5_10 <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 5*3*7, 3*7)))
+res_sim_same_5_10_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 5*3*7, 3*7)), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+## 7 instead of 9 between visits in regime2
+res_sim_same_7_10 <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 7*3*7, 3*7)))
+res_sim_same_7_10_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 7*3*7, 3*7)), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+## 11 instead of 9 between visits in regime2
+res_sim_same_11_10 <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 11*3*7, 3*7)))
+res_sim_same_11_10_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 3*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 11*3*7, 3*7)), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+## arti tp every two weeks
+res_sim_same_10_arti2w <-  run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 2*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 7*3*7, 3*7)))
+res_sim_same_10_arti2w_H0 <- run_simulation(n_sim = n_sim_temp, arti_tp = seq(0, 5*3*7, 2*7), visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 7*3*7, 3*7)), group_change_from_BL = c(10, 10), prob_regime = list(c(0.5, 0.5), c(0.5, 0.5)), group_50percent = c(0.5, 0.5))
+write_runs(list(res_sim_same_orig_10 = res_sim_same_orig_10, res_sim_same_orig_10_H0 = res_sim_same_orig_10_H0,
+                res_sim_same_5_10 = res_sim_same_5_10, res_sim_same_5_10_H0 = res_sim_same_5_10_H0,
+                res_sim_same_7_10 = res_sim_same_7_10, res_sim_same_7_10_H0 = res_sim_same_7_10_H0,
+                res_sim_same_11_10 = res_sim_same_11_10, res_sim_same_11_10_H0 = res_sim_same_11_10_H0,
+                res_sim_same_10_arti2w = res_sim_same_10_arti2w, res_sim_same_10_arti2w_H0 = res_sim_same_10_arti2w_H0), 
+           
+           file = outfile)
+
+
 
 
 ######
