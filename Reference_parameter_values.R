@@ -1,0 +1,24 @@
+n_sim = 10000
+method_temps = c("nn", "nn_timeframe", "mean_timeframe", "spline")
+degrees_freedom_spline = c(3, 5, 5)
+n_spline_points = c(2, 2, 3)
+n_patients = 304
+n_groups = 2
+prob_group = c(0.5,0.5)
+group_change_from_BL = c(10, 21)
+group_50percent= c(0.25, 0.5)
+group_sd_total = c(27, 27)
+breaks_prob_covars = list(list(c("low", "high"), c(0.5, 0.5)), list(c("low", "medium", "high"), c(1/3, 1/3, 1/3)), list(c(seq(18,75,1)), data.frame(mean = 45, sd = 22))) 
+visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 11*2*7, 2*7))
+prob_regime = list(c(2/3, 1/3), c(0.8, 0.2))
+time_jitter = 2
+covars = c("risk_group", "pcr_group", "age") 
+covar_score_corr = 0.25
+time_corr = 0.9
+missing_at_BL_percent = c(0.01, 0.01)
+missing_per_visit_percent = c(0.025, 0.015)
+dropout_per_visit_percent = c(0.01, 0.01) 
+arti_tp = seq(0, 5*3*7, 3*7)
+timeframe_half = 11
+mice_runs = 20
+no_seed = TRUE

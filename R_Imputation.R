@@ -797,16 +797,17 @@ grid_matching_method <- function(df_arti, df_missing, method_temp, degrees_freed
       for (j in c(2: (nrow(df_a)-1))) { # BL can be missing, but should just be inserted using mice, not be used for the grid here, ending at second to last as final tp should not be matched (but can be found atm! if wrong, delete like BL)
         if (is.na(df_a$score_nn[j])){
           diff_vec <- abs(df_m$time - df_a$time_arti[j])
-          idx <- which.min(diff_vec)
-          if (!(all(is.na(df_m$score_obs)))){
-            while(is.na(df_m$score_obs[idx])){
-              diff_vec[idx] <- 999 # so that is for sure is not the min
-              idx <- which.min(diff_vec)
-            }
+          
+          valid_idx <- which(!is.na(df_m$score_obs) & !is.na(diff_vec))
+          
+          if (length(valid_idx) > 0) {
+            min_diff <- min(diff_vec[valid_idx])
+            idx <- valid_idx[diff_vec[valid_idx] == min_diff]
             
             df_arti$score_nn[
-              df_arti$id == id_temp & df_arti$time_arti == df_a$time_arti[j]
-            ] <- df_m$score_obs[idx]
+              df_arti$id == id_temp &
+                df_arti$time_arti == df_a$time_arti[j]
+            ] <- mean(df_m$score_obs[idx]) # one minimum or mean over two minima
             
           } else { # all NA! (e.g. dropout after BL) --> should stay NA
             df_arti$score_nn[
@@ -842,7 +843,7 @@ grid_matching_method <- function(df_arti, df_missing, method_temp, degrees_freed
       
       for (j in c(2: (nrow(df_a)-1))) {
         if (is.na(df_a$score_nn_timeframe[j])) {
-          idx <- which.min(abs(df_m$time - df_a$time_arti[j]))
+          idx <- which(abs(df_m$time - df_a$time_arti[j]) == min(abs(df_m$time - df_a$time_arti[j])))
           if (all(abs(df_m$time - df_a$time_arti[j]) > timeframe_half)){ # then outside of timeframe
             df_arti$score_nn_timeframe[
               df_arti$id == id_temp & df_arti$time_arti == df_a$time_arti[j]
@@ -850,7 +851,7 @@ grid_matching_method <- function(df_arti, df_missing, method_temp, degrees_freed
           }else{
             df_arti$score_nn_timeframe[
               df_arti$id == id_temp & df_arti$time_arti == df_a$time_arti[j]
-            ] <- df_m$score_obs[idx]
+            ] <- mean(df_m$score_obs[idx]) # one minimum or mean over two minima
           }
           
         } else {
@@ -1541,7 +1542,7 @@ run_simulation <- function(
     breaks_prob_covars = list(list(c("low", "high"), c(0.5, 0.5)), list(c("low", "medium", "high"), c(1/3, 1/3, 1/3)), list(c(seq(18,75,1)), data.frame(mean = 45, sd = 22))), 
     visit_regime = list(seq(0, 5*3*7, 3*7), seq(0, 9*2*7, 2*7)), prob_regime = list(c(2/3, 1/3), c(0.8, 0.2)), time_jitter = 2, covars = c("risk_group", "pcr_group", "age"), 
     covar_score_corr = 0.25, time_corr = 0.9, missing_at_BL_percent = c(0.01, 0.01), missing_per_visit_percent = c(0.025, 0.015), dropout_per_visit_percent = c(0.01, 0.01), 
-    arti_tp = seq(0, 5*3*7, 3*7), timeframe_half = 14, mice_runs = 20, no_seed = TRUE
+    arti_tp = seq(0, 5*3*7, 3*7), timeframe_half = 11, mice_runs = 20, no_seed = TRUE
     
 ) {
   
@@ -1707,7 +1708,7 @@ write_runs <- function(df_list, file) {
 #gc()
 
 
-n_sim_temp <- 1
+n_sim_temp <- 10
 datum <- lubridate::today()
 
 
