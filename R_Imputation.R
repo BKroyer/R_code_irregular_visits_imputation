@@ -142,7 +142,7 @@ introduce_missingness <- function( # missing BL possible, but dropped according 
   dropout_per_visit = NA,
   meanscore_population = 50,
   # meanvisit_population = 
-  beta_score = -0.7, # lower value are bad, assuming bad values are missing more often
+  beta_score = -0.7, # lower value are bad, assuming bad values trigger missings at the next time point more often
   beta_visit  =  0.5 # per visit, assuming later visits have more missing values
 ) {
   
@@ -362,8 +362,8 @@ mice_fun <- function(df, BL_only = FALSE, mice_runs = mice_runs){
     imp_cols <- score_cols
     # print(score_cols)
   }
-  
-  pred <- make.predictorMatrix(df)
+
+  pred <- make.predictorMatrix(df[!(names(df) %in% "id")])
   pred[,] <- 0
   base_preds <- c("risk_group", "pcr_group", "age")
   pred[imp_cols, base_preds] <- 1
@@ -371,7 +371,7 @@ mice_fun <- function(df, BL_only = FALSE, mice_runs = mice_runs){
   # diag(pred[score_cols, score_cols]) <- 0
   diag(pred)[match(score_cols, colnames(pred))] <- 0
   
-  meth <- make.method(df)
+  meth <- make.method(df[!(names(df) %in% "id")])
   meth[] <- ""
   meth[imp_cols] <- "pmm" #"pmm"; norm should be faster
   
@@ -689,6 +689,25 @@ sim_long_data <- function(
   # build data, no missing values
   df_full <- bind_rows(data_list)
   df_full <- df_full %>% arrange(id, time)
+  
+  # convert covars to numeric and factor where possible
+  for (covar_temp in covars) {
+    x <- df_full[[covar_temp]]
+    x_num <- suppressWarnings(as.numeric(as.character(x)))
+    
+    # Keep numeric only if conversion didn't turn any non-missing values into NA
+    if (!any(!is.na(x) & is.na(x_num))) {
+      df_full[[covar_temp]] <- x_num
+    } else {
+      df_full[[covar_temp]] <- as.factor(x)
+    }
+  }
+  
+  # convert groups to factor # only reasonable for normal group variables
+  all_group_nams <- names(df_full)[grepl("group", names(df_full))]
+  df_full[all_group_nams] <- lapply(df_full[all_group_nams], factor)
+  
+  
   
   
   # MISSINGNESS ----------------------------------------------------------------
