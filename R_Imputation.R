@@ -1324,42 +1324,31 @@ prim_analysis <- function(df_temp, complete_cases = FALSE){
       )
     
     m <- length(unique(df_change_BL$.imp))  # number of imputations
-    estimates <- numeric(m)
-    ses       <- numeric(m)
-    
+
     # Fit ANCOVA per imputation and store treatment effect & SE
-    for (i in seq_along(unique(df_change_BL$.imp))){
-      
-      imp_temp <- unique(df_change_BL$.imp)[i]
-      df_temp_imp <- df_change_BL[df_change_BL$.imp == imp_temp, ]
-      
-      mod <- lm(change_from_BL ~ group + BL_value + pcr_group + risk_group, data = df_temp_imp)
-      
-      # extract estimate & standard error for treatment effect (assume 'groupB' vs baseline)
-      coef_idx <- grep("^group", names(coef(mod)))  # first coefficient that starts with "group"
-      estimates[i] <- coef(mod)[coef_idx]
-      ses[i]       <- summary(mod)$coefficients[coef_idx, "Std. Error"]
-    }
+    imp_ids <- setdiff(unique(na.omit(df_change_BL$.imp)), 0)
     
-    # Rubin's rules pooling
-    Q_bar <- mean(estimates) # the pooled estimate
-    U_bar <- mean(ses^2)
-    B     <- var(estimates)
+    fits <- lapply(imp_ids, function(id) {
+      lm(
+        change_from_BL ~ group + BL_value + pcr_group + risk_group,
+        data = df_change_BL[df_change_BL$.imp == id, ]
+      )
+    })
     
-    T_var <- U_bar + (1 + 1/m) * B # total_variance <- within_variance + (1 + 1/m) * between_variance
-    se_pooled <- sqrt(T_var) # the pooled se
+    pooled <- mice::pool(fits)
+    result <- summary(pooled)
+    second_group <- paste0("group", levels(df_full$group)[2])
+    result <- result[result$term == second_group, ]
     
-    # approximate df (Barnard-Rubin)
-    df_rubin <- (m - 1) * (1 + U_bar / ((1 + 1/m) * B))^2
-    dfs <- df_rubin
-    
-    t_value <- Q_bar / se_pooled
-    p_value <- 2 * pt(abs(t_value), df = df_rubin, lower.tail = FALSE) # had pnorm in Minim: p_values <- 2 * (1 - pnorm(abs(t_values)))
-    # 1- pnorm does the same as writing lower.tail = FALSE
+    t_value <- result$statistic
+    dfs <- result$df
+    se_pooled <- result$std.error
+    Q_bar <- result$estimate
+    p_value <- result$p.value
     
   }
-  
-  # Return results as list 
+
+  # Return results as list
   return(list(
     t_value = t_value,
     dfs = dfs,
